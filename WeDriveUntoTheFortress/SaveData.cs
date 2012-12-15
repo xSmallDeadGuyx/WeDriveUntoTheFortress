@@ -29,8 +29,10 @@ namespace WeDriveUntoTheFortress {
 				BinaryReader br = new BinaryReader(new FileStream(".save", FileMode.Open));
 				byte[] data = br.ReadBytes((int) br.BaseStream.Length);
 				levelsComplete = new bool[data.Length];
-				for(int i = 0; i < data.Length; i++)
+				for(int i = 0; i < data.Length; i++) {
 					levelsComplete[i] = data[i] == 255;
+					if(levelsComplete[i]) Program.game.selectedLevel = i == data.Length - 1 ? i : i + 1;
+				}
 				br.BaseStream.Close();
 				br.Close();
 			}

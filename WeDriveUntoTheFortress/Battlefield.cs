@@ -12,26 +12,29 @@ namespace WeDriveUntoTheFortress {
 
 		public Viewport port;
 		
-		public readonly int tileSize = 32;
-		public int hTiles = 20;
-		public int vTiles = 13;
+		public static readonly int tileSize = 32;
+		public static readonly int hTiles = 20;
+		public static readonly int vTiles = 13;
 
 		public Random rand = new Random();
 
-		public bool[,] map;
+		public MapObject[,] map;
 
-		public Battlefield(Viewport v) {
-			map = new bool[hTiles, vTiles];
-			for(int i = 0; i < hTiles; i++) for(int j = 0; j < vTiles; j++)
-				if(rand.Next(20) == 0)
-					map[i, j] = true;
-			
+		public Battlefield(MapObject[,] m, Viewport v) {
+			map = m;
 			port = v;
 		}
 
 		public void draw() {
-			for(int i = 0; i < hTiles; i++) for(int j = 0; j < vTiles; j++)
-				port.draw(map[i, j] ? box : grass, new Vector2(i * tileSize, j * tileSize), Color.White);
+			for(int i = 0; i < hTiles; i++) for(int j = 0; j < vTiles; j++) {
+				port.draw(grass, new Vector2(i * tileSize, j * tileSize), Color.White);
+				if(map[i, j] != MapObject.empty)
+					port.draw(map[i, j] == MapObject.box ? box : grass, new Vector2(i * tileSize, j * tileSize), Color.White);
+			}
+		}
+
+		public void onUpdate() {
+
 		}
 	}
 }

@@ -19,7 +19,7 @@ namespace WeDriveUntoTheFortress {
 		public readonly int width = 640;
 		public readonly int height = 480;
 
-		public enum GameState { mainMenu, levelSelect };
+		public enum GameState { mainMenu, levelSelect, inBattle };
 		public readonly int numLevels = 5;
 
 		public Texture2D title;
@@ -36,6 +36,8 @@ namespace WeDriveUntoTheFortress {
 		public Texture2D circle_small_darkred;
 		public Texture2D circle_small_red;
 		public Texture2D circle_small_green;
+
+		public Texture2D circle_large_outline;
 
 		private GameState state = GameState.mainMenu;
 		public GameState gameState {
@@ -59,8 +61,13 @@ namespace WeDriveUntoTheFortress {
 
 		public Menu mainMenu;
 		public Menu levelMenu;
+		public int selectedLevel = 0;
+		public int hoveredLevel = -1;
+		public LevelData levelData = new LevelData();
 
 		public SaveData saveData;
+
+		public Battlefield battlefield;
 
 		public WeDriveUntoTheFortress() : base() {
 			graphics = new GraphicsDeviceManager(this);
@@ -112,7 +119,8 @@ namespace WeDriveUntoTheFortress {
 						gameState = GameState.mainMenu;
 						break;
 					case 1:
-
+						battlefield = new Battlefield(levelData[selectedLevel], new Viewport(0, vBorder, width, height - 2 * vBorder));
+						gameState = GameState.inBattle;
 						break;
 				}
 			};
@@ -152,6 +160,8 @@ namespace WeDriveUntoTheFortress {
 			circle_small_red = Content.Load<Texture2D>("circle_small_red");
 			circle_small_green = Content.Load<Texture2D>("circle_small_green");
 
+			circle_large_outline = Content.Load<Texture2D>("circle_large_outline");
+
 			createMainMenu();
 		}
 
@@ -166,6 +176,21 @@ namespace WeDriveUntoTheFortress {
 					break;
 				case GameState.levelSelect:
 					levelMenu.onUpdate();
+					hoveredLevel = -1;
+					MouseState mouse = Mouse.GetState();
+					for(int i = 0; i < numLevels; i++) {
+						int x = width / 2 + (96 * (i - numLevels / 2));
+						int y = height / 2;
+						if(mouse.X > x - (i == numLevels - 1 ? 32 : 16) && mouse.X < x + (i == numLevels - 1 ? 32 : 16) && mouse.Y > y - (i == numLevels - 1 ? 40 : 16) && mouse.Y < y + (i == numLevels - 1 ? 40 : 16))
+							hoveredLevel = i;
+						if(mouse.X > x - circle_large_red.Width / 2 && mouse.X < x + circle_large_red.Width / 2 && mouse.Y > y + 40 - circle_large_red.Height / 2 && mouse.Y < y + 40 + circle_large_red.Height / 2)
+							hoveredLevel = i;
+					}
+					if(mouse.LeftButton == ButtonState.Pressed && hoveredLevel > -1 && (saveData.levelsComplete[hoveredLevel] || hoveredLevel == 0 || saveData.levelsComplete[hoveredLevel - 1]))
+						selectedLevel = hoveredLevel;
+					break;
+				case GameState.inBattle:
+					battlefield.onUpdate();
 					break;
 			}
 			base.Update(gameTime);
@@ -191,11 +216,21 @@ namespace WeDriveUntoTheFortress {
 						int y = height / 2;
 						spriteBatch.Draw(i == numLevels - 1 ? fortress : village, new Vector2(x - (i == numLevels - 1 ? 32 : 16), y - (i == numLevels - 1 ? 40 : 16)), Color.White);
 						spriteBatch.Draw(saveData.levelsComplete[i] ? circle_large_green : i == 0 || saveData.levelsComplete[i - 1] ? circle_large_red : circle_large_darkred, new Vector2(x - circle_large_red.Width / 2, y + 40 - circle_large_red.Height / 2), Color.White);
+						if(hoveredLevel == i)
+							spriteBatch.Draw(circle_large_outline, new Vector2(x - circle_large_red.Width / 2, y + 40 - circle_large_red.Height / 2), Color.LightGray);
+						if(selectedLevel == i)
+							spriteBatch.Draw(circle_large_outline, new Vector2(x - circle_large_red.Width / 2, y + 40 - circle_large_red.Height / 2), Color.White);
 						if(i > 0)
 							for(int n = 3; n > 0; n--)
 								spriteBatch.Draw(saveData.levelsComplete[i] ? circle_small_green : i == 0 || saveData.levelsComplete[i - 1] ? circle_small_red : circle_small_darkred, new Vector2(x - circle_small_red.Width / 2 - n * 24, y + 40 - circle_small_red.Height / 2), Color.White);
 					}
 					levelMenu.draw();
+					spriteBatch.End();
+					break;
+				case GameState.inBattle:
+					spriteBatch.Begin();
+					battlefield.draw();
+					spriteBatch.Draw(hudMain, new Rectangle(0, 0, width, height), Color.White);
 					spriteBatch.End();
 					break;
 			}
