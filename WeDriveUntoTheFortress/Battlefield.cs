@@ -68,6 +68,11 @@ namespace WeDriveUntoTheFortress {
 
 		public static Texture2D[] weaponTextures;
 
+		public static Texture2D youWin;
+		public static Texture2D youLose;
+		public static Texture2D p1Win;
+		public static Texture2D p2Win;
+
 		public List<Explosion> explosions = new List<Explosion>();
 		public List<Explosion> toRemove = new List<Explosion>();
 
@@ -101,6 +106,8 @@ namespace WeDriveUntoTheFortress {
 		public Vector2 targetStart;
 
 		public bool is2Player = false;
+		public bool showWinner = false;
+		public int winTimer = 0;
 
 		public TankWeapon[] weapon = { TankWeapon.cannon, TankWeapon.cannon };
 
@@ -149,145 +156,149 @@ namespace WeDriveUntoTheFortress {
 		}
 
 		public void onUpdate() {
-			KeyboardState keyboard = Keyboard.GetState();
-			
-			List<Tank> deadTanks = new List<Tank>();
-			foreach(Tank t in friendlyTanks)
-				if(t.health <= 0) {
-					deadTanks.Add(t);
-					map[(int) t.position.X / tileSize, (int) t.position.Y / tileSize] = MapObject.deadTank;
-				}
-			foreach(Tank t in enemyTanks)
-				if(t.health <= 0) {
-					deadTanks.Add(t);
-					map[(int) t.position.X / tileSize, (int) t.position.Y / tileSize] = MapObject.deadTank;
-				}
-			foreach(Tank t in deadTanks) {
-				if(friendlyTanks.Contains(t)) friendlyTanks.Remove(t);
-				if(enemyTanks.Contains(t)) enemyTanks.Remove(t);
-			}
+			if(!showWinner) {
+				KeyboardState keyboard = Keyboard.GetState();
 
-			beingMoved = turn % 2 == 0 ? friendlyTanks[(turn / 2) % friendlyTanks.Count] : enemyTanks[(turn / 2) % enemyTanks.Count];
-			while(beingMoved.health <= 0) {
-				if(turn % 2 == 0) friendlyTanks.Remove(beingMoved);
-				else enemyTanks.Remove(beingMoved);
+				List<Tank> deadTanks = new List<Tank>();
+				foreach(Tank t in friendlyTanks)
+					if(t.health <= 0) {
+						deadTanks.Add(t);
+						map[(int) t.position.X / tileSize, (int) t.position.Y / tileSize] = MapObject.deadTank;
+					}
+				foreach(Tank t in enemyTanks)
+					if(t.health <= 0) {
+						deadTanks.Add(t);
+						map[(int) t.position.X / tileSize, (int) t.position.Y / tileSize] = MapObject.deadTank;
+					}
+				foreach(Tank t in deadTanks) {
+					if(friendlyTanks.Contains(t)) friendlyTanks.Remove(t);
+					if(enemyTanks.Contains(t)) enemyTanks.Remove(t);
+				}
+				if(friendlyTanks.Count == 0 || enemyTanks.Count == 0)
+					showWinner = true;
+
 				beingMoved = turn % 2 == 0 ? friendlyTanks[(turn / 2) % friendlyTanks.Count] : enemyTanks[(turn / 2) % enemyTanks.Count];
-				map[(int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / 32] = MapObject.deadTank;
-			}
-			WeaponController controller = controllers[(int) weapon[turn % 2]];
-
-			if(nextTurnTimer > 0) {
-				nextTurnTimer--;
-				if(nextTurnTimer == 0) {
-					movesLeft = 5;
-					moving = false;
-					shot = false;
-					shooting = false;
-					turn++;
-					nextTurnTimer = 1800;
+				while(beingMoved.health <= 0) {
+					if(turn % 2 == 0) friendlyTanks.Remove(beingMoved);
+					else enemyTanks.Remove(beingMoved);
+					beingMoved = turn % 2 == 0 ? friendlyTanks[(turn / 2) % friendlyTanks.Count] : enemyTanks[(turn / 2) % enemyTanks.Count];
+					map[(int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / 32] = MapObject.deadTank;
 				}
-			}
+				WeaponController controller = controllers[(int) weapon[turn % 2]];
 
-			if(movesLeft == 0 && nextTurnTimer > (shot ? 90 : 300)) {
-				nextTurnTimer = shot ? 90 : 300;
-				moving = false;
-			}
-			else if(!moving && !shooting) {
-				if(turn % 2 == 0 || is2Player) {
-					if(movesLeft > 0) {
-						if(keyboard.IsKeyDown(Keys.Up) && beingMoved.position.Y / tileSize > 0) {
-							moving = true;
-							beingMoved.dir = Tank.Dir.up;
-						}
-						else if(keyboard.IsKeyDown(Keys.Right) && beingMoved.position.X / tileSize < hTiles - 1) {
-							moving = true;
-							beingMoved.dir = Tank.Dir.right;
-						}
-						else if(keyboard.IsKeyDown(Keys.Down) && beingMoved.position.Y / tileSize < vTiles - 1) {
-							moving = true;
-							beingMoved.dir = Tank.Dir.down;
-						}
-						else if(keyboard.IsKeyDown(Keys.Left) && beingMoved.position.X / tileSize > 0) {
-							moving = true;
-							beingMoved.dir = Tank.Dir.left;
-						}
-					}
-
-					if(moving)
-						lastPos = beingMoved.position / tileSize;
-					else if(!shot && keyboard.IsKeyDown(Keys.Space)) {
-						shooting = true;
-						targetPos = targetStart = beingMoved.position + dirToVector(beingMoved.gunDir) * (tileSize / 2);
-						targetDir = dirToVector(beingMoved.gunDir);
+				if(nextTurnTimer > 0) {
+					nextTurnTimer--;
+					if(nextTurnTimer == 0) {
+						movesLeft = 5;
+						moving = false;
+						shot = false;
+						shooting = false;
+						turn++;
+						nextTurnTimer = 1800;
 					}
 				}
-			}
-			
-			else if(!shooting) {
-				beingMoved.position += 2 * dirToVector(beingMoved.dir);
-				if(beingMoved.position.X % tileSize == 0 && beingMoved.position.Y % tileSize == 0) {
-					map[(int) lastPos.X, (int) lastPos.Y] = MapObject.empty;
-					map[(int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / tileSize] = turn % 2 == 0 ? MapObject.friendlyTank : MapObject.enemyTank;
-					movesLeft--;
+
+				if(movesLeft == 0 && nextTurnTimer > (shot ? 90 : 300)) {
+					nextTurnTimer = shot ? 90 : 300;
 					moving = false;
 				}
-			}
-			else if((keyboard.IsKeyDown(Keys.Space) && (turn % 2 == 0 || is2Player)) || (turn % 2 == 1 && !is2Player)) {
-				targetPos += controller.targetSpeed * targetDir;
-				Vector2 offset = targetPos - targetStart;
-				double dist = offset.Length() / (double) tileSize;
-				if(dist >= controller.range || offset.X * dirToVector(beingMoved.gunDir).X < 0 || offset.Y * dirToVector(beingMoved.gunDir).Y < 0)
-					targetDir *= -1;
-			}
-			else {
-				shooting = false;
-				shot = true;
-				if(movesLeft > 0) movesLeft = 1;
-				nextTurnTimer = 180;
-				int hitRange = (int) (targetPos - beingMoved.position).Length() / tileSize;
-				Vector2 dir = dirToVector(beingMoved.gunDir);
-				Vector2 checkPos = beingMoved.position / tileSize + dir;
-				bool checking = true;
-				bool hit = false;
-				while(checking) {
-					switch(map[(int) checkPos.X, (int) checkPos.Y]) {
-						case MapObject.deadTank:
-						case MapObject.box:
-							checking = controller.penetratesBoxes;
-							if(!checking) {
-								hit = true;
-								controller.onHitBox((int) checkPos.X, (int) checkPos.Y);
+				else if(!moving && !shooting) {
+					if(turn % 2 == 0 || is2Player) {
+						if(movesLeft > 0) {
+							if(keyboard.IsKeyDown(Keys.Up) && beingMoved.position.Y / tileSize > 0) {
+								moving = true;
+								beingMoved.dir = Tank.Dir.up;
 							}
-							break;
-						case MapObject.enemyTank:
-						case MapObject.friendlyTank:
-							Tank t = getTankAt(checkPos);
-							if(t != null) {
-								checking = controller.penetratesTanks;
+							else if(keyboard.IsKeyDown(Keys.Right) && beingMoved.position.X / tileSize < hTiles - 1) {
+								moving = true;
+								beingMoved.dir = Tank.Dir.right;
+							}
+							else if(keyboard.IsKeyDown(Keys.Down) && beingMoved.position.Y / tileSize < vTiles - 1) {
+								moving = true;
+								beingMoved.dir = Tank.Dir.down;
+							}
+							else if(keyboard.IsKeyDown(Keys.Left) && beingMoved.position.X / tileSize > 0) {
+								moving = true;
+								beingMoved.dir = Tank.Dir.left;
+							}
+						}
+
+						if(moving)
+							lastPos = beingMoved.position / tileSize;
+						else if(!shot && keyboard.IsKeyDown(Keys.Space)) {
+							shooting = true;
+							targetPos = targetStart = beingMoved.position + dirToVector(beingMoved.gunDir) * (tileSize / 2);
+							targetDir = dirToVector(beingMoved.gunDir);
+						}
+					}
+				}
+
+				else if(!shooting) {
+					beingMoved.position += 2 * dirToVector(beingMoved.dir);
+					if(beingMoved.position.X % tileSize == 0 && beingMoved.position.Y % tileSize == 0) {
+						map[(int) lastPos.X, (int) lastPos.Y] = MapObject.empty;
+						map[(int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / tileSize] = turn % 2 == 0 ? MapObject.friendlyTank : MapObject.enemyTank;
+						movesLeft--;
+						moving = false;
+					}
+				}
+				else if((keyboard.IsKeyDown(Keys.Space) && (turn % 2 == 0 || is2Player)) || (turn % 2 == 1 && !is2Player)) {
+					targetPos += controller.targetSpeed * targetDir;
+					Vector2 offset = targetPos - targetStart;
+					double dist = offset.Length() / (double) tileSize;
+					if(dist >= controller.range || offset.X * dirToVector(beingMoved.gunDir).X < 0 || offset.Y * dirToVector(beingMoved.gunDir).Y < 0)
+						targetDir *= -1;
+				}
+				else {
+					shooting = false;
+					shot = true;
+					if(movesLeft > 0) movesLeft = 1;
+					nextTurnTimer = 180;
+					int hitRange = (int) (targetPos - beingMoved.position).Length() / tileSize;
+					Vector2 dir = dirToVector(beingMoved.gunDir);
+					Vector2 checkPos = beingMoved.position / tileSize + dir;
+					bool checking = true;
+					bool hit = false;
+					while(checking) {
+						switch(map[(int) checkPos.X, (int) checkPos.Y]) {
+							case MapObject.deadTank:
+							case MapObject.box:
+								checking = controller.penetratesBoxes;
 								if(!checking) {
 									hit = true;
-									controller.onHitTank(t, checkPos * tileSize + new Vector2(Battlefield.tileSize / 2, Battlefield.tileSize / 2) - Battlefield.tileSize / 2 * dirToVector(beingMoved.gunDir));
+									controller.onHitBox((int) checkPos.X, (int) checkPos.Y);
 								}
-							}
-							break;
+								break;
+							case MapObject.enemyTank:
+							case MapObject.friendlyTank:
+								Tank t = getTankAt(checkPos);
+								if(t != null) {
+									checking = controller.penetratesTanks;
+									if(!checking) {
+										hit = true;
+										controller.onHitTank(t, checkPos * tileSize + new Vector2(Battlefield.tileSize / 2, Battlefield.tileSize / 2) - Battlefield.tileSize / 2 * dirToVector(beingMoved.gunDir));
+									}
+								}
+								break;
+						}
+						if((checkPos - (beingMoved.position / 32)).Length() >= hitRange)
+							checking = false;
+						checkPos += dir;
 					}
-					if((checkPos - (beingMoved.position / 32)).Length() >= hitRange)
-						checking = false;
-					checkPos += dir;
+					if(!hit)
+						controller.onHitNothing((int) checkPos.X, (int) checkPos.Y);
 				}
-				if(!hit)
-					controller.onHitNothing((int) checkPos.X, (int) checkPos.Y);
-			}
 
-			if(!shot && !shooting && (turn % 2 == 0 || is2Player)) {
-				if(keyboard.IsKeyDown(Keys.W))
-					beingMoved.gunDir = Tank.Dir.up;
-				else if(keyboard.IsKeyDown(Keys.D))
-					beingMoved.gunDir = Tank.Dir.right;
-				else if(keyboard.IsKeyDown(Keys.S))
-					beingMoved.gunDir = Tank.Dir.down;
-				else if(keyboard.IsKeyDown(Keys.A))
-					beingMoved.gunDir = Tank.Dir.left;
+				if(!shot && !shooting && (turn % 2 == 0 || is2Player)) {
+					if(keyboard.IsKeyDown(Keys.W))
+						beingMoved.gunDir = Tank.Dir.up;
+					else if(keyboard.IsKeyDown(Keys.D))
+						beingMoved.gunDir = Tank.Dir.right;
+					else if(keyboard.IsKeyDown(Keys.S))
+						beingMoved.gunDir = Tank.Dir.down;
+					else if(keyboard.IsKeyDown(Keys.A))
+						beingMoved.gunDir = Tank.Dir.left;
+				}
 			}
 		}
 
@@ -341,6 +352,20 @@ namespace WeDriveUntoTheFortress {
 				float c = t.health / 100.0F;
 				port.draw(tankEnemy, new Vector2(Program.game.width - (128 + i * 48), -32), new Rectangle(0, 0, tileSize, tileSize), new Color(c, c, c));
 				port.draw(gunEnemy, new Vector2(Program.game.width - (128 + i * 48), -32), new Rectangle(tileSize * 2, 0, tileSize, tileSize), new Color(c, c, c));
+			}
+
+			if(showWinner) {
+				winTimer++;
+				if(winTimer > 300) {
+					if(!is2Player) {
+						Program.game.saveData.levelsComplete[Program.game.selectedLevel] = true;
+						if(Program.game.selectedLevel < Program.game.levelData.length - 1) Program.game.selectedLevel++;
+						Program.game.gameState = WeDriveUntoTheFortress.GameState.levelSelect;
+					}
+					else
+						Program.game.gameState = WeDriveUntoTheFortress.GameState.mainMenu;
+				}
+				port.draw(is2Player ? (friendlyTanks.Count == 0 ? p2Win : p1Win) : (friendlyTanks.Count == 0 ? youLose : youWin), new Vector2(0, -32), Color.White);
 			}
 		}
 	}

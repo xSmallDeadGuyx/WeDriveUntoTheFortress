@@ -155,6 +155,11 @@ namespace WeDriveUntoTheFortress {
 
 			Battlefield.turnIndicator = Content.Load<Texture2D>("turn_indicator");
 
+			Battlefield.youWin = Content.Load<Texture2D>("you_win");
+			Battlefield.youLose = Content.Load<Texture2D>("you_lose");
+			Battlefield.p1Win = Content.Load<Texture2D>("player_1_wins");
+			Battlefield.p2Win = Content.Load<Texture2D>("player_2_wins");
+
 			Explosion.texture = Content.Load<Texture2D>("explosion");
 
 			Battlefield.weaponTextures = new Texture2D[] { Content.Load<Texture2D>("impact_target"), Content.Load<Texture2D>("cluster_target") };

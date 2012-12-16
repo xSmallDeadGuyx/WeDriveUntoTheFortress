@@ -45,44 +45,24 @@ namespace WeDriveUntoTheFortress {
 			return new Rectangle(r.X + port.X, r.Y + port.Y, r.Width, r.Height);
 		}
 
-		public bool insideViewport(Rectangle r) {
-			if(r.X > 0 && r.X < port.Width) return true;
-			if(r.Y > 0 && r.Y < port.Height) return true;
-			if(r.X + r.Width > 0 && r.X + r.Width < port.Width) return true;
-			if(r.Y + r.Height > 0 && r.Y + r.Height < port.Height) return true;
-			return false;
-		}
-
-		public bool insideViewport(Vector2 v, Texture2D t) {
-			if(v.X > 0 && v.X < port.Width) return true;
-			if(v.Y > 0 && v.Y < port.Height) return true;
-			if(v.X + t.Width > 0 && v.X + t.Width < port.Width) return true;
-			if(v.Y + t.Height > 0 && v.Y + t.Height < port.Height) return true;
-			return false;
-		}
-
 		public void draw(Texture2D tex, Rectangle rect, Color c) {
 			Rectangle newRect = addOffset(rect);
-			if(insideViewport(newRect))
-				spriteBatch.Draw(tex, newRect, c);
+			spriteBatch.Draw(tex, newRect, c);
 		}
 
 		public void draw(Texture2D tex, Vector2 pos, Color c) {
 			Vector2 newPos = addOffset(pos);
-			if(insideViewport(newPos, tex))
-				spriteBatch.Draw(tex, newPos, c);
+			spriteBatch.Draw(tex, newPos, c);
 		}
 
 		public void draw(Texture2D tex, Rectangle destinationRect, Rectangle sourceRect, Color c) {
 			Rectangle newDestinationRect = addOffset(destinationRect);
-			if(insideViewport(newDestinationRect))
-				spriteBatch.Draw(tex, newDestinationRect, sourceRect, c);
+			spriteBatch.Draw(tex, newDestinationRect, sourceRect, c);
 		}
 
 		public void draw(Texture2D tex, Vector2 pos, Rectangle sourceRect, Color c) {
 			Vector2 newPos = addOffset(pos);
-			if(insideViewport(newPos, tex))
-				spriteBatch.Draw(tex, newPos, sourceRect, c);
+			spriteBatch.Draw(tex, newPos, sourceRect, c);
 		}
 
 		public void drawLargeString(string str, Vector2 pos, Color c) {
