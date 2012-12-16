@@ -29,6 +29,7 @@ namespace WeDriveUntoTheFortress {
 
 		public Texture2D village;
 		public Texture2D fortress;
+		public Texture2D[] story;
 
 		public Texture2D circle_large_darkred;
 		public Texture2D circle_large_red;
@@ -146,6 +147,8 @@ namespace WeDriveUntoTheFortress {
 			MenuButton.button_up = Content.Load<Texture2D>("button_up");
 			MenuButton.button_down = Content.Load<Texture2D>("button_down");
 			MenuButton.button_over = Content.Load<Texture2D>("button_over");
+
+			story = new Texture2D[] { Content.Load<Texture2D>("story1"), Content.Load<Texture2D>("story2"), Content.Load<Texture2D>("story3"), Content.Load<Texture2D>("story4"), Content.Load<Texture2D>("story5") };
 
 			Battlefield.grass = Content.Load<Texture2D>("grass");
 			Battlefield.box = Content.Load<Texture2D>("box");

@@ -38,6 +38,7 @@
     <Compile Include="Battlefield.cs" />
     <Compile Include="BmFont.cs" />
     <Compile Include="BotAI.cs" />
+    <Compile Include="Pathfinder.cs" />
     <Compile Include="FontRenderer.cs" />
     <Compile Include="LevelData.cs" />
     <Compile Include="Menu.cs" />

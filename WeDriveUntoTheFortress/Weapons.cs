@@ -21,7 +21,7 @@ namespace WeDriveUntoTheFortress {
 			battlefield.createExplosion(x * Battlefield.tileSize + Battlefield.tileSize / 2, y * Battlefield.tileSize + Battlefield.tileSize / 2);
 		}
 
-		public bool penetratesTanks = false;
+		public bool penetratesTanks = true;
 		public bool penetratesBoxes = false;
 
 		public int range = 16;
