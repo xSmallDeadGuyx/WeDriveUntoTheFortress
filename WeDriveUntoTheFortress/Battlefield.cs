@@ -64,6 +64,8 @@ namespace WeDriveUntoTheFortress {
 		public static Texture2D tankEnemy;
 		public static Texture2D gunEnemy;
 
+		public static Texture2D turnIndicator;
+
 		public static Texture2D[] weaponTextures;
 
 		public List<Explosion> explosions = new List<Explosion>();
@@ -87,7 +89,7 @@ namespace WeDriveUntoTheFortress {
 		public int turn = 0;
 		public int movesLeft = 5;
 		public bool moving = false;
-		public int nextTurnTimer = 0;
+		public int nextTurnTimer = 1800;
 		public Tank beingMoved;
 
 		public Vector2 lastPos;
@@ -98,7 +100,7 @@ namespace WeDriveUntoTheFortress {
 		public Vector2 targetDir;
 		public Vector2 targetStart;
 
-		public bool is2Player = true;
+		public bool is2Player = false;
 
 		public TankWeapon[] weapon = { TankWeapon.cannon, TankWeapon.cannon };
 
@@ -148,39 +150,67 @@ namespace WeDriveUntoTheFortress {
 
 		public void onUpdate() {
 			KeyboardState keyboard = Keyboard.GetState();
-			beingMoved = turn % 2 == 0 ? friendlyTanks[turn / 2] : enemyTanks[turn / 2];
-			WeaponController controller = controllers[(int) weapon[turn % 2]];
-			if(movesLeft == 0) {
-				movesLeft = 5;
-				nextTurnTimer = shot ? 90 : 300;
-				moving = false;
+			
+			List<Tank> deadTanks = new List<Tank>();
+			foreach(Tank t in friendlyTanks)
+				if(t.health <= 0) {
+					deadTanks.Add(t);
+					map[(int) t.position.X / tileSize, (int) t.position.Y / tileSize] = MapObject.deadTank;
+				}
+			foreach(Tank t in enemyTanks)
+				if(t.health <= 0) {
+					deadTanks.Add(t);
+					map[(int) t.position.X / tileSize, (int) t.position.Y / tileSize] = MapObject.deadTank;
+				}
+			foreach(Tank t in deadTanks) {
+				if(friendlyTanks.Contains(t)) friendlyTanks.Remove(t);
+				if(enemyTanks.Contains(t)) enemyTanks.Remove(t);
 			}
-			else if(nextTurnTimer > 0) {
+
+			beingMoved = turn % 2 == 0 ? friendlyTanks[(turn / 2) % friendlyTanks.Count] : enemyTanks[(turn / 2) % enemyTanks.Count];
+			while(beingMoved.health <= 0) {
+				if(turn % 2 == 0) friendlyTanks.Remove(beingMoved);
+				else enemyTanks.Remove(beingMoved);
+				beingMoved = turn % 2 == 0 ? friendlyTanks[(turn / 2) % friendlyTanks.Count] : enemyTanks[(turn / 2) % enemyTanks.Count];
+				map[(int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / 32] = MapObject.deadTank;
+			}
+			WeaponController controller = controllers[(int) weapon[turn % 2]];
+
+			if(nextTurnTimer > 0) {
 				nextTurnTimer--;
 				if(nextTurnTimer == 0) {
+					movesLeft = 5;
 					moving = false;
 					shot = false;
 					shooting = false;
 					turn++;
+					nextTurnTimer = 1800;
 				}
+			}
+
+			if(movesLeft == 0 && nextTurnTimer > (shot ? 90 : 300)) {
+				nextTurnTimer = shot ? 90 : 300;
+				moving = false;
 			}
 			else if(!moving && !shooting) {
 				if(turn % 2 == 0 || is2Player) {
-					if(keyboard.IsKeyDown(Keys.Up) && beingMoved.position.Y / tileSize > 0) {
-						moving = true;
-						beingMoved.dir = Tank.Dir.up;
-					}
-					else if(keyboard.IsKeyDown(Keys.Right) && beingMoved.position.X / tileSize < hTiles - 1) {
-						moving = true;
-						beingMoved.dir = Tank.Dir.right;
-					}
-					else if(keyboard.IsKeyDown(Keys.Down) && beingMoved.position.Y / tileSize < vTiles - 1) {
-						moving = true;
-						beingMoved.dir = Tank.Dir.down;
-					}
-					else if(keyboard.IsKeyDown(Keys.Left) && beingMoved.position.X / tileSize > 0) {
-						moving = true;
-						beingMoved.dir = Tank.Dir.left;
+					if(movesLeft > 0) {
+						if(keyboard.IsKeyDown(Keys.Up) && beingMoved.position.Y / tileSize > 0) {
+							moving = true;
+							beingMoved.dir = Tank.Dir.up;
+						}
+						else if(keyboard.IsKeyDown(Keys.Right) && beingMoved.position.X / tileSize < hTiles - 1) {
+							moving = true;
+							beingMoved.dir = Tank.Dir.right;
+						}
+						else if(keyboard.IsKeyDown(Keys.Down) && beingMoved.position.Y / tileSize < vTiles - 1) {
+							moving = true;
+							beingMoved.dir = Tank.Dir.down;
+						}
+						else if(keyboard.IsKeyDown(Keys.Left) && beingMoved.position.X / tileSize > 0) {
+							moving = true;
+							beingMoved.dir = Tank.Dir.left;
+						}
 					}
 
 					if(moving)
@@ -192,6 +222,7 @@ namespace WeDriveUntoTheFortress {
 					}
 				}
 			}
+			
 			else if(!shooting) {
 				beingMoved.position += 2 * dirToVector(beingMoved.dir);
 				if(beingMoved.position.X % tileSize == 0 && beingMoved.position.Y % tileSize == 0) {
@@ -201,7 +232,7 @@ namespace WeDriveUntoTheFortress {
 					moving = false;
 				}
 			}
-			else if(keyboard.IsKeyDown(Keys.Space)) {
+			else if((keyboard.IsKeyDown(Keys.Space) && (turn % 2 == 0 || is2Player)) || (turn % 2 == 1 && !is2Player)) {
 				targetPos += controller.targetSpeed * targetDir;
 				Vector2 offset = targetPos - targetStart;
 				double dist = offset.Length() / (double) tileSize;
@@ -211,7 +242,8 @@ namespace WeDriveUntoTheFortress {
 			else {
 				shooting = false;
 				shot = true;
-				movesLeft = 1;
+				if(movesLeft > 0) movesLeft = 1;
+				nextTurnTimer = 180;
 				int hitRange = (int) (targetPos - beingMoved.position).Length() / tileSize;
 				Vector2 dir = dirToVector(beingMoved.gunDir);
 				Vector2 checkPos = beingMoved.position / tileSize + dir;
@@ -219,6 +251,7 @@ namespace WeDriveUntoTheFortress {
 				bool hit = false;
 				while(checking) {
 					switch(map[(int) checkPos.X, (int) checkPos.Y]) {
+						case MapObject.deadTank:
 						case MapObject.box:
 							checking = controller.penetratesBoxes;
 							if(!checking) {
@@ -229,9 +262,7 @@ namespace WeDriveUntoTheFortress {
 						case MapObject.enemyTank:
 						case MapObject.friendlyTank:
 							Tank t = getTankAt(checkPos);
-							if(t == null)
-								Console.WriteLine("Map position says tank, no tank found. This should never happen");
-							else {
+							if(t != null) {
 								checking = controller.penetratesTanks;
 								if(!checking) {
 									hit = true;
@@ -266,15 +297,24 @@ namespace WeDriveUntoTheFortress {
 					port.draw(grass, new Vector2(i * tileSize, j * tileSize), Color.White);
 					if(map[i, j] == MapObject.box)
 						port.draw(box, new Vector2(i * tileSize, j * tileSize), Color.White);
+					if(map[i, j] == MapObject.deadTank)
+						port.draw(tankFriendly, new Vector2(i * tileSize, j * tileSize), new Rectangle(0, 0, tileSize, tileSize), Color.Black);
 				}
 			foreach(Tank t in friendlyTanks) {
-				port.draw(tankFriendly, t.position, new Rectangle(t.dir == Tank.Dir.up || t.dir == Tank.Dir.down ? tileSize : 0, 0, tileSize, tileSize), Color.White);
-				port.draw(gunFriendly, t.position, new Rectangle((int) t.gunDir * tileSize, 0, tileSize, tileSize), Color.White);
+				float c = t.health / 100.0F;
+				port.draw(tankFriendly, t.position, new Rectangle(t.dir == Tank.Dir.up || t.dir == Tank.Dir.down ? tileSize : 0, 0, tileSize, tileSize), new Color(c, c, c));
+				port.draw(gunFriendly, t.position, new Rectangle((int) t.gunDir * tileSize, 0, tileSize, tileSize), new Color(c, c, c));
 			}
 			foreach(Tank t in enemyTanks) {
-				port.draw(tankEnemy, t.position, new Rectangle(t.dir == Tank.Dir.up || t.dir == Tank.Dir.down ? tileSize : 0, 0, tileSize, tileSize), Color.White);
-				port.draw(gunEnemy, t.position, new Rectangle((int) t.gunDir * tileSize, 0, tileSize, tileSize), Color.White);
+				float c = t.health / 100.0F;
+				port.draw(tankEnemy, t.position, new Rectangle(t.dir == Tank.Dir.up || t.dir == Tank.Dir.down ? tileSize : 0, 0, tileSize, tileSize), new Color(c, c, c));
+				port.draw(gunEnemy, t.position, new Rectangle((int) t.gunDir * tileSize, 0, tileSize, tileSize), new Color(c, c, c));
 			}
+
+			Tank current = turn % 2 == 0 ? friendlyTanks[(turn / 2) % friendlyTanks.Count] : enemyTanks[(turn / 2) % enemyTanks.Count];
+			port.draw(turnIndicator, current.position - new Vector2(8, 8), Color.White);
+			if(movesLeft > 0) port.drawSmallStringCentered("" + movesLeft, current.position + new Vector2(tileSize / 2, tileSize + 12), Color.Black);
+			port.drawSmallStringCentered("" + (int) Math.Ceiling(nextTurnTimer / 60.0D), new Vector2(Program.game.width / 2, 12), nextTurnTimer < (shot ? 90 : 300) ? Color.DarkRed : Color.Black);
 
 			foreach(Explosion e in explosions)
 				e.draw();
@@ -287,7 +327,21 @@ namespace WeDriveUntoTheFortress {
 		}
 
 		public void drawHUD() {
+			port.drawSmallStringCentered("Turn " + turn, new Vector2(Program.game.width / 2, -16), Color.Black);
 
+			for(int i = 0; i < friendlyTanks.Count; i++) {
+				Tank t = friendlyTanks[i];
+				float c = t.health / 100.0F;
+				port.draw(tankFriendly, new Vector2(128 + i * 48, -32), new Rectangle(0, 0, tileSize, tileSize), new Color(c, c, c));
+				port.draw(gunFriendly, new Vector2(128 + i * 48, -32), new Rectangle(0, 0, tileSize, tileSize), new Color(c, c, c));
+			}
+
+			for(int i = 0; i < enemyTanks.Count; i++) {
+				Tank t = enemyTanks[i];
+				float c = t.health / 100.0F;
+				port.draw(tankEnemy, new Vector2(Program.game.width - (128 + i * 48), -32), new Rectangle(0, 0, tileSize, tileSize), new Color(c, c, c));
+				port.draw(gunEnemy, new Vector2(Program.game.width - (128 + i * 48), -32), new Rectangle(tileSize * 2, 0, tileSize, tileSize), new Color(c, c, c));
+			}
 		}
 	}
 }

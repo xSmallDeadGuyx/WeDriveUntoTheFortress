@@ -82,25 +82,23 @@ namespace WeDriveUntoTheFortress {
 		private void createMainMenu() {
 			mainMenu = new Menu(new Viewport(0, vBorder, width, height - 2 * vBorder));
 
-			string[] buttons = { "New Game", "Load Game", "Quit" };
+			string[] buttons = { "One Player", "Two Player", "Quit" };
 			for(int i = 0; i < buttons.Length; i++) {
 				int x = width / 2 - 128;
 				int y = height / 2 + (i - buttons.Length / 2) * 72;
 				mainMenu.controls.Add(new MenuButton(mainMenu, i, buttons[i], new Vector2(x, y)));
 			}
-			if(!File.Exists(".save"))
-				mainMenu.controls[1].enabled = false;
 
 			mainMenu.performEvent = delegate(int id) {
 				switch(id) {
 					case 0:
 						saveData = new SaveData(numLevels);
+						saveData.readDataFromFile();
 						gameState = GameState.levelSelect;
 						break;
 					case 1:
-						saveData = new SaveData(numLevels);
-						saveData.readDataFromFile();
-						gameState = GameState.levelSelect;
+						battlefield = new Battlefield(levelData[rand.Next(levelData.length)], new Viewport(0, vBorder, width, height - 2 * vBorder), true);
+						gameState = GameState.inBattle;
 						break;
 					case 2:
 						Exit();
@@ -154,6 +152,8 @@ namespace WeDriveUntoTheFortress {
 			Battlefield.tankEnemy = Content.Load<Texture2D>("tank_red");
 			Battlefield.gunFriendly = Content.Load<Texture2D>("tank_gun_green");
 			Battlefield.gunEnemy = Content.Load<Texture2D>("tank_gun_red");
+
+			Battlefield.turnIndicator = Content.Load<Texture2D>("turn_indicator");
 
 			Explosion.texture = Content.Load<Texture2D>("explosion");
 

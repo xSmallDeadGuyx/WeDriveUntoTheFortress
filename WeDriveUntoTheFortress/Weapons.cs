@@ -9,11 +9,17 @@ namespace WeDriveUntoTheFortress {
 
 		public Battlefield battlefield;
 
-		public virtual void onHitTank(Tank t, Vector2 point) { }
+		public virtual void onHitTank(Tank t, Vector2 point) {
+			battlefield.createExplosion((int) point.X, (int) point.Y);
+		}
 		public virtual void onHitBox(int x, int y) {
 			battlefield.map[x, y] = MapObject.empty;
+			battlefield.createExplosion(x * Battlefield.tileSize + Battlefield.tileSize / 2, y * Battlefield.tileSize + Battlefield.tileSize / 2);
+
 		}
-		public virtual void onHitNothing(int x, int y) { }
+		public virtual void onHitNothing(int x, int y) {
+			battlefield.createExplosion(x * Battlefield.tileSize + Battlefield.tileSize / 2, y * Battlefield.tileSize + Battlefield.tileSize / 2);
+		}
 
 		public bool penetratesTanks = false;
 		public bool penetratesBoxes = false;
