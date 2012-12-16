@@ -10,8 +10,10 @@ namespace WeDriveUntoTheFortress {
 		public Battlefield battlefield;
 
 		public virtual void onHitTank(Tank t, Vector2 point) { }
-		public virtual void onHitBox(int x, int y) { }
-		public virtual void onJourney(int x, int y) { }
+		public virtual void onHitBox(int x, int y) {
+			battlefield.map[x, y] = MapObject.empty;
+		}
+		public virtual void onHitNothing(int x, int y) { }
 
 		public bool penetratesTanks = false;
 		public bool penetratesBoxes = false;
@@ -68,12 +70,17 @@ namespace WeDriveUntoTheFortress {
 		}
 
 		public override void onHitBox(int x, int y) {
-			battlefield.createExplosion(x * Battlefield.tileSize, y * Battlefield.tileSize);
+			battlefield.map[x, y] = MapObject.empty;
+			onHitNothing(x, y);
+		}
+
+		public override void onHitNothing(int x, int y) {
+			battlefield.createExplosion(x * Battlefield.tileSize + Battlefield.tileSize / 2, y * Battlefield.tileSize + Battlefield.tileSize / 2);
 			int dist = 30;
 			for(int i = 0; i < 9; i++) {
 				double nx = dist * Math.Cos(i * MathHelper.PiOver4);
 				double ny = dist * Math.Sin(i * MathHelper.PiOver4);
-				battlefield.createDelayedExplosion(x * Battlefield.tileSize + (int) nx, y * Battlefield.tileSize + (int) ny, 3);
+				battlefield.createDelayedExplosion(x * Battlefield.tileSize + Battlefield.tileSize / 2 + (int) nx, y * Battlefield.tileSize + Battlefield.tileSize / 2 + (int) ny, 3);
 			}
 
 			foreach(Tank t in battlefield.friendlyTanks)

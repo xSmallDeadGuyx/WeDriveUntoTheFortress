@@ -240,6 +240,7 @@ namespace WeDriveUntoTheFortress {
 					spriteBatch.Begin();
 					battlefield.draw();
 					spriteBatch.Draw(hudMain, new Rectangle(0, 0, width, height), Color.White);
+					battlefield.drawHUD();
 					spriteBatch.End();
 					break;
 			}
