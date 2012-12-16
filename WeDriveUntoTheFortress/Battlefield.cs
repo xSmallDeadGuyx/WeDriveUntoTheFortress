@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Audio;
 
 namespace WeDriveUntoTheFortress {
 	public class Tank {
@@ -37,6 +38,8 @@ namespace WeDriveUntoTheFortress {
 		public void draw() {
 			if(delay > 0) {
 				delay--;
+				if(delay == 0)
+					Battlefield.explosion.Play();
 				return;
 			}
 			battlefield.port.draw(texture, pos - new Vector2(Battlefield.tileSize / 2, Battlefield.tileSize / 2), new Rectangle(Battlefield.tileSize * frame, 0, Battlefield.tileSize, Battlefield.tileSize), Color.White);
@@ -72,6 +75,8 @@ namespace WeDriveUntoTheFortress {
 		public static Texture2D youLose;
 		public static Texture2D p1Win;
 		public static Texture2D p2Win;
+
+		public static SoundEffectInstance explosion;
 
 		public List<Explosion> explosions = new List<Explosion>();
 		public List<Explosion> toRemove = new List<Explosion>();
@@ -118,6 +123,10 @@ namespace WeDriveUntoTheFortress {
 			map = m;
 			port = v;
 			is2Player = p2;
+
+			Program.game.menuMusic.Stop();
+			Program.game.gameMusic.Play();
+
 			if(!p2) {
 				botAI = new BotAI(this);
 				storyTimer = 600;
@@ -141,6 +150,7 @@ namespace WeDriveUntoTheFortress {
 
 		public void createExplosion(int x, int y) {
 			explosions.Add(new Explosion(new Vector2(x, y), this));
+			explosion.Play();
 		}
 
 		public void endExplosion(Explosion e) {
@@ -170,7 +180,7 @@ namespace WeDriveUntoTheFortress {
 		public void onUpdate() {
 			KeyboardState keyboard = Keyboard.GetState();
 			if(storyTimer > 0) {
-				if(keyboard.IsKeyDown(Keys.Space))
+				if(keyboard.IsKeyDown(Keys.Enter))
 					storyTimer = 0;
 			}
 			else {
@@ -351,9 +361,11 @@ namespace WeDriveUntoTheFortress {
 			}
 		}
 
-		public void draw() {
-			if(storyTimer > 0)
+		public bool draw() {
+			if(storyTimer > 0) {
 				port.draw(Program.game.story[Program.game.selectedLevel], new Vector2(0, -32), Color.White);
+				return true;
+			}
 			else {
 				WeaponController controller = controllers[(int) weapon[turn % 2]];
 				for(int i = 0; i < hTiles; i++) for(int j = 0; j < vTiles; j++) {
@@ -387,6 +399,7 @@ namespace WeDriveUntoTheFortress {
 
 				if(shooting)
 					port.draw(weaponTextures[(int) weapon[turn % 2]], targetPos + controller.targetOffset, Color.White);
+				return false;
 			}
 		}
 

@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.GamerServices;
 using System.IO;
+using Microsoft.Xna.Framework.Audio;
 
 namespace WeDriveUntoTheFortress {
 	public class WeDriveUntoTheFortress : Game {
@@ -14,6 +15,9 @@ namespace WeDriveUntoTheFortress {
 		public SpriteBatch spriteBatch;
 
 		public Random rand = new Random();
+
+		public SoundEffectInstance menuMusic;
+		public SoundEffectInstance gameMusic;
 
 		public readonly int vBorder = 32;
 		public readonly int width = 640;
@@ -84,6 +88,9 @@ namespace WeDriveUntoTheFortress {
 		private void createMainMenu() {
 			mainMenu = new Menu(new Viewport(0, vBorder, width, height - 2 * vBorder));
 
+			gameMusic.Stop();
+			menuMusic.Play();
+
 			string[] buttons = { "One Player", "Two Player", "Quit" };
 			for(int i = 0; i < buttons.Length; i++) {
 				int x = width / 2 - 128;
@@ -111,6 +118,10 @@ namespace WeDriveUntoTheFortress {
 
 		private void createLevelSelectMenu() {
 			levelMenu = new Menu(new Viewport(0, vBorder, width, height - 2 * vBorder));
+
+			gameMusic.Stop();
+			menuMusic.Play();
+
 			levelMenu.controls.Add(new MenuButton(levelMenu, 0, "Back", new Vector2(width/2 - 288, height / 2 - vBorder + 64)));
 			levelMenu.controls.Add(new MenuButton(levelMenu, 1, "Go!", new Vector2(width / 2 + 32, height / 2 - vBorder + 64)));
 			levelMenu.performEvent = delegate(int id) {
@@ -136,6 +147,21 @@ namespace WeDriveUntoTheFortress {
 
 			hudMain = Content.Load<Texture2D>("hud_main");
 			title = Content.Load<Texture2D>("title");
+
+			SoundEffect menuSe = Content.Load<SoundEffect>("music_menu");
+			SoundEffect mainSe = Content.Load<SoundEffect>("music_battle");
+			SoundEffect expSe = Content.Load<SoundEffect>("explosion");
+
+			menuMusic = menuSe.CreateInstance();
+			menuMusic.Volume = 1.0F;
+			menuMusic.IsLooped = true;
+			gameMusic = mainSe.CreateInstance();
+			gameMusic.Volume = 1.0F;
+			gameMusic.IsLooped = true;
+
+			Battlefield.explosion = expSe.CreateInstance();
+			Battlefield.explosion.Volume = 1.0F;
+			Battlefield.explosion.IsLooped = false;
 
 			FontFile smallFile = FontLoader.Load(Path.Combine(Content.RootDirectory, "AncienSmall.fnt"));
 			Texture2D smallTex = Content.Load<Texture2D>("AncienSmall_0.png");
@@ -250,8 +276,8 @@ namespace WeDriveUntoTheFortress {
 					break;
 				case GameState.inBattle:
 					spriteBatch.Begin();
-					battlefield.draw();
-					spriteBatch.Draw(hudMain, new Rectangle(0, 0, width, height), Color.White);
+					if(!battlefield.draw())
+						spriteBatch.Draw(hudMain, new Rectangle(0, 0, width, height), Color.White);
 					battlefield.drawHUD();
 					if(!battlefield.is2Player && selectedLevel == 0)
 						tutorial.draw();
