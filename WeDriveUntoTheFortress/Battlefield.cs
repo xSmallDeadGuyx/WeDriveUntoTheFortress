@@ -155,6 +155,11 @@ namespace WeDriveUntoTheFortress {
 			return null;
 		}
 
+		public bool canMoveTo(int x, int y) {
+			if(x < 0 || y < 0 || x >= hTiles || y >= vTiles) return false;
+			return map[x, y] == MapObject.empty;
+		}
+
 		public void onUpdate() {
 			if(!showWinner) {
 				KeyboardState keyboard = Keyboard.GetState();
@@ -205,19 +210,19 @@ namespace WeDriveUntoTheFortress {
 				else if(!moving && !shooting) {
 					if(turn % 2 == 0 || is2Player) {
 						if(movesLeft > 0) {
-							if(keyboard.IsKeyDown(Keys.Up) && beingMoved.position.Y / tileSize > 0) {
+							if(keyboard.IsKeyDown(Keys.Up) && canMoveTo((int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / tileSize - 1)) {
 								moving = true;
 								beingMoved.dir = Tank.Dir.up;
 							}
-							else if(keyboard.IsKeyDown(Keys.Right) && beingMoved.position.X / tileSize < hTiles - 1) {
+							else if(keyboard.IsKeyDown(Keys.Right) && canMoveTo((int) beingMoved.position.X / tileSize + 1, (int) beingMoved.position.Y / tileSize)) {
 								moving = true;
 								beingMoved.dir = Tank.Dir.right;
 							}
-							else if(keyboard.IsKeyDown(Keys.Down) && beingMoved.position.Y / tileSize < vTiles - 1) {
+							else if(keyboard.IsKeyDown(Keys.Down) && canMoveTo((int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / tileSize + 1)) {
 								moving = true;
 								beingMoved.dir = Tank.Dir.down;
 							}
-							else if(keyboard.IsKeyDown(Keys.Left) && beingMoved.position.X / tileSize > 0) {
+							else if(keyboard.IsKeyDown(Keys.Left) && canMoveTo((int) beingMoved.position.X / tileSize - 1, (int) beingMoved.position.Y / tileSize)) {
 								moving = true;
 								beingMoved.dir = Tank.Dir.left;
 							}

@@ -41,6 +41,7 @@
     <Compile Include="LevelData.cs" />
     <Compile Include="Menu.cs" />
     <Compile Include="SaveData.cs" />
+    <Compile Include="Tutorial.cs" />
     <Compile Include="Viewport.cs" />
     <Compile Include="Weapons.cs" />
     <Compile Include="WeDriveUntoTheFortress.cs" />

@@ -68,6 +68,7 @@ namespace WeDriveUntoTheFortress {
 		public SaveData saveData;
 
 		public Battlefield battlefield;
+		public Tutorial tutorial;
 
 		public WeDriveUntoTheFortress() : base() {
 			graphics = new GraphicsDeviceManager(this);
@@ -118,6 +119,7 @@ namespace WeDriveUntoTheFortress {
 						break;
 					case 1:
 						battlefield = new Battlefield(levelData[selectedLevel], new Viewport(0, vBorder, width, height - 2 * vBorder));
+						if(selectedLevel == 0) tutorial = new Tutorial();
 						gameState = GameState.inBattle;
 						break;
 				}
@@ -205,6 +207,8 @@ namespace WeDriveUntoTheFortress {
 					break;
 				case GameState.inBattle:
 					battlefield.onUpdate();
+					if(!battlefield.is2Player && selectedLevel == 0)
+						tutorial.onUpdate();
 					break;
 			}
 			base.Update(gameTime);
@@ -246,6 +250,8 @@ namespace WeDriveUntoTheFortress {
 					battlefield.draw();
 					spriteBatch.Draw(hudMain, new Rectangle(0, 0, width, height), Color.White);
 					battlefield.drawHUD();
+					if(!battlefield.is2Player && selectedLevel == 0)
+						tutorial.draw();
 					spriteBatch.End();
 					break;
 			}
