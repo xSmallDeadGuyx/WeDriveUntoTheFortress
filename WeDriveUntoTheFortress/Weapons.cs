@@ -26,7 +26,7 @@ namespace WeDriveUntoTheFortress {
 
 		public int range = 16;
 		public int targetSpeed = 6;
-		public Vector2 targetOffset = new Vector2(0, 0);
+		public Vector2 targetOffset = new Vector2(-16, -16);
 
 		public WeaponController(Battlefield b) {
 			battlefield = b;
@@ -38,7 +38,7 @@ namespace WeDriveUntoTheFortress {
 		public CannonController(Battlefield b) : base(b) { }
 
 		public override void onHitTank(Tank t, Vector2 point) {
-			t.health -= 30;
+			t.health -= 40;
 			battlefield.createExplosion((int) point.X, (int) point.Y);
 		}
 	}
@@ -46,7 +46,7 @@ namespace WeDriveUntoTheFortress {
 	public class ClusterController : WeaponController {
 
 		public ClusterController(Battlefield b) : base(b) {
-			targetOffset = new Vector2(-16, -16);
+			targetOffset = new Vector2(-24, -24);
 			targetSpeed = 8;
 			range = 12;
 		}

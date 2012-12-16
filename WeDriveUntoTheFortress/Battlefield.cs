@@ -105,6 +105,7 @@ namespace WeDriveUntoTheFortress {
 		public Vector2 targetDir;
 		public Vector2 targetStart;
 
+		public BotAI botAI;
 		public bool is2Player = false;
 		public bool showWinner = false;
 		public int winTimer = 0;
@@ -115,6 +116,7 @@ namespace WeDriveUntoTheFortress {
 			map = m;
 			port = v;
 			is2Player = p2;
+			if(!p2) botAI = new BotAI(this);
 			controllers = new WeaponController[] { new CannonController(this), new ClusterController(this) };
 
 			for(int i = 0; i < hTiles; i++) for(int j = 0; j < vTiles; j++)
@@ -183,12 +185,7 @@ namespace WeDriveUntoTheFortress {
 					showWinner = true;
 
 				beingMoved = turn % 2 == 0 ? friendlyTanks[(turn / 2) % friendlyTanks.Count] : enemyTanks[(turn / 2) % enemyTanks.Count];
-				while(beingMoved.health <= 0) {
-					if(turn % 2 == 0) friendlyTanks.Remove(beingMoved);
-					else enemyTanks.Remove(beingMoved);
-					beingMoved = turn % 2 == 0 ? friendlyTanks[(turn / 2) % friendlyTanks.Count] : enemyTanks[(turn / 2) % enemyTanks.Count];
-					map[(int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / 32] = MapObject.deadTank;
-				}
+				
 				WeaponController controller = controllers[(int) weapon[turn % 2]];
 
 				if(nextTurnTimer > 0) {
@@ -208,6 +205,7 @@ namespace WeDriveUntoTheFortress {
 					moving = false;
 				}
 				else if(!moving && !shooting) {
+					lastPos = beingMoved.position / tileSize;
 					if(turn % 2 == 0 || is2Player) {
 						if(movesLeft > 0) {
 							if(keyboard.IsKeyDown(Keys.Up) && canMoveTo((int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / tileSize - 1)) {
@@ -228,16 +226,19 @@ namespace WeDriveUntoTheFortress {
 							}
 						}
 
-						if(moving)
-							lastPos = beingMoved.position / tileSize;
-						else if(!shot && keyboard.IsKeyDown(Keys.Space)) {
+						if(!moving && !shot && keyboard.IsKeyDown(Keys.Space)) {
 							shooting = true;
-							targetPos = targetStart = beingMoved.position + dirToVector(beingMoved.gunDir) * (tileSize / 2);
+							targetPos = targetStart = beingMoved.position + dirToVector(beingMoved.gunDir) * (tileSize / 2) + new Vector2(tileSize / 2, tileSize / 2);
 							targetDir = dirToVector(beingMoved.gunDir);
 						}
 					}
+					else {
+						if(movesLeft > 0)
+							botAI.moveRequestAvailable();
+						else if(!shot)
+							botAI.startShoot();
+					}
 				}
-
 				else if(!shooting) {
 					beingMoved.position += 2 * dirToVector(beingMoved.dir);
 					if(beingMoved.position.X % tileSize == 0 && beingMoved.position.Y % tileSize == 0) {
@@ -247,24 +248,45 @@ namespace WeDriveUntoTheFortress {
 						moving = false;
 					}
 				}
-				else if((keyboard.IsKeyDown(Keys.Space) && (turn % 2 == 0 || is2Player)) || (turn % 2 == 1 && !is2Player)) {
+				else if((keyboard.IsKeyDown(Keys.Space) && (turn % 2 == 0 || is2Player)) || (turn % 2 == 1 && !is2Player && !botAI.finishedShooting())) {
 					targetPos += controller.targetSpeed * targetDir;
 					Vector2 offset = targetPos - targetStart;
 					double dist = offset.Length() / (double) tileSize;
 					if(dist >= controller.range || offset.X * dirToVector(beingMoved.gunDir).X < 0 || offset.Y * dirToVector(beingMoved.gunDir).Y < 0)
 						targetDir *= -1;
+
+					if(targetPos.X < 0) {
+						targetPos.X = 0;
+						targetDir.X = Math.Abs(targetDir.X);
+					}
+					if(targetPos.X > tileSize * hTiles - 1) {
+						targetPos.X = tileSize * hTiles - 1;
+						targetDir.X = -Math.Abs(targetDir.X);
+					}
+					if(targetPos.Y < 0) {
+						targetPos.Y = 0;
+						targetDir.Y = Math.Abs(targetDir.Y);
+					}
+					if(targetPos.Y > tileSize * vTiles - 1) {
+						targetPos.Y = tileSize * vTiles - 1;
+						targetDir.Y = -Math.Abs(targetDir.Y);
+					}
 				}
 				else {
 					shooting = false;
 					shot = true;
 					if(movesLeft > 0) movesLeft = 1;
 					nextTurnTimer = 180;
-					int hitRange = (int) (targetPos - beingMoved.position).Length() / tileSize;
 					Vector2 dir = dirToVector(beingMoved.gunDir);
 					Vector2 checkPos = beingMoved.position / tileSize + dir;
 					bool checking = true;
 					bool hit = false;
+					int maxRange = (int) (targetPos - targetStart).Length() / tileSize;
 					while(checking) {
+						if(checkPos.X < 0 || checkPos.Y < 0 || checkPos.X >= hTiles || checkPos.Y >= vTiles)
+							break;
+						if((checkPos - beingMoved.position / 32).Length() > maxRange)
+							break;
 						switch(map[(int) checkPos.X, (int) checkPos.Y]) {
 							case MapObject.deadTank:
 							case MapObject.box:
@@ -286,15 +308,13 @@ namespace WeDriveUntoTheFortress {
 								}
 								break;
 						}
-						if((checkPos - (beingMoved.position / 32)).Length() >= hitRange)
-							checking = false;
 						checkPos += dir;
 					}
 					if(!hit)
 						controller.onHitNothing((int) checkPos.X, (int) checkPos.Y);
 				}
 
-				if(!shot && !shooting && (turn % 2 == 0 || is2Player)) {
+				if(!shooting && (turn % 2 == 0 || is2Player)) {
 					if(keyboard.IsKeyDown(Keys.W))
 						beingMoved.gunDir = Tank.Dir.up;
 					else if(keyboard.IsKeyDown(Keys.D))
@@ -366,6 +386,7 @@ namespace WeDriveUntoTheFortress {
 						Program.game.saveData.levelsComplete[Program.game.selectedLevel] = true;
 						if(Program.game.selectedLevel < Program.game.levelData.length - 1) Program.game.selectedLevel++;
 						Program.game.gameState = WeDriveUntoTheFortress.GameState.levelSelect;
+						Program.game.saveData.saveDataToFile();
 					}
 					else
 						Program.game.gameState = WeDriveUntoTheFortress.GameState.mainMenu;
