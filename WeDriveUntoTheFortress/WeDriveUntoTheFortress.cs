@@ -150,6 +150,15 @@ namespace WeDriveUntoTheFortress {
 			Battlefield.grass = Content.Load<Texture2D>("grass");
 			Battlefield.box = Content.Load<Texture2D>("box");
 
+			Battlefield.tankFriendly = Content.Load<Texture2D>("tank_green");
+			Battlefield.tankEnemy = Content.Load<Texture2D>("tank_red");
+			Battlefield.gunFriendly = Content.Load<Texture2D>("tank_gun_green");
+			Battlefield.gunEnemy = Content.Load<Texture2D>("tank_gun_red");
+
+			Explosion.texture = Content.Load<Texture2D>("explosion");
+
+			Battlefield.weaponTextures = new Texture2D[] { Content.Load<Texture2D>("impact_target"), Content.Load<Texture2D>("cluster_target") };
+
 			village = Content.Load<Texture2D>("village");
 			fortress = Content.Load<Texture2D>("fortress");
 
