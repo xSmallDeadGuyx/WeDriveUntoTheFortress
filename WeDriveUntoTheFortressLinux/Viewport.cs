@@ -30,11 +30,11 @@ namespace WeDriveUntoTheFortress {
 		}
 
 		public MouseState getMouse() {
-			return new MouseState(mouseState.X - port.X, mouseState.Y - port.Y, mouseState.ScrollWheelValue, mouseState.LeftButton, mouseState.MiddleButton, mouseState.RightButton, mouseState.XButton1, mouseState.XButton2);
+			return mouseState;
 		}
 
 		public MouseState getLastMouse() {
-			return new MouseState(lastMouseState.X - port.X, lastMouseState.Y - port.Y, lastMouseState.ScrollWheelValue, lastMouseState.LeftButton, lastMouseState.MiddleButton, lastMouseState.RightButton, lastMouseState.XButton1, lastMouseState.XButton2);
+			return lastMouseState;
 		}
 
 		public Vector2 addOffset(Vector2 v) {

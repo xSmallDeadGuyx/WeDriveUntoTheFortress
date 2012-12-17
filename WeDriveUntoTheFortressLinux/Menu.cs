@@ -38,7 +38,7 @@ namespace WeDriveUntoTheFortress {
 		public override void onUpdate() {
 			MouseState mouse = sourceMenu.viewport.getMouse();
 			if(enabled) {
-				if(mouse.X > dimensions.X && mouse.X < dimensions.X + dimensions.Width && mouse.Y > dimensions.Y && mouse.Y < dimensions.Y + dimensions.Height) {
+				if(mouse.X - sourceMenu.viewport.port.X > dimensions.X && mouse.X - sourceMenu.viewport.port.X < dimensions.X + dimensions.Width && mouse.Y - sourceMenu.viewport.port.Y > dimensions.Y && mouse.Y - sourceMenu.viewport.port.Y < dimensions.Y + dimensions.Height) {
 					if(mouse.LeftButton == ButtonState.Pressed)
 						state = MenuButtonState.down;
 					else {
