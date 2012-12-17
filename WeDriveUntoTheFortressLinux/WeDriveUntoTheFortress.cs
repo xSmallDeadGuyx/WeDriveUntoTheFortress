@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -7,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.GamerServices;
+using System.IO;
 using Microsoft.Xna.Framework.Audio;
 
 namespace WeDriveUntoTheFortress {
@@ -236,7 +236,7 @@ namespace WeDriveUntoTheFortress {
 					break;
 				case GameState.inBattle:
 					battlefield.onUpdate();
-					if(!battlefield.is2Player && selectedLevel == 0)
+					if(!battlefield.is2Player && selectedLevel == 0 && saveData.levelsComplete[0])
 						tutorial.onUpdate();
 					break;
 			}
@@ -276,10 +276,11 @@ namespace WeDriveUntoTheFortress {
 					break;
 				case GameState.inBattle:
 					spriteBatch.Begin();
-					if(!battlefield.draw())
+					if(!battlefield.draw()) {
 						spriteBatch.Draw(hudMain, new Rectangle(0, 0, width, height), Color.White);
-					battlefield.drawHUD();
-					if(!battlefield.is2Player && selectedLevel == 0)
+						battlefield.drawHUD();
+					}
+					if(!battlefield.is2Player && selectedLevel == 0 && saveData.levelsComplete[0])
 						tutorial.draw();
 					spriteBatch.End();
 					break;
