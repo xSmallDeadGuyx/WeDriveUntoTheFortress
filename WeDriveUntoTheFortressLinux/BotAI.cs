@@ -84,6 +84,7 @@ namespace WeDriveUntoTheFortress {
 						}
 						checkPos += battlefield.dirToVector(dir);
 					}
+					if(battlefield.shooting) break;
 				}
 			}
 		}
