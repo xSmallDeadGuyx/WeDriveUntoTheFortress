@@ -236,7 +236,7 @@ namespace WeDriveUntoTheFortress {
 					break;
 				case GameState.inBattle:
 					battlefield.onUpdate();
-					if(!battlefield.is2Player && selectedLevel == 0 && saveData.levelsComplete[0])
+					if(!battlefield.is2Player && selectedLevel == 0 && !saveData.levelsComplete[0])
 						tutorial.onUpdate();
 					break;
 			}
@@ -279,9 +279,9 @@ namespace WeDriveUntoTheFortress {
 					if(!battlefield.draw()) {
 						spriteBatch.Draw(hudMain, new Rectangle(0, 0, width, height), Color.White);
 						battlefield.drawHUD();
+						if(!battlefield.is2Player && selectedLevel == 0 && !saveData.levelsComplete[0])
+							tutorial.draw();
 					}
-					if(!battlefield.is2Player && selectedLevel == 0 && saveData.levelsComplete[0])
-						tutorial.draw();
 					spriteBatch.End();
 					break;
 			}
