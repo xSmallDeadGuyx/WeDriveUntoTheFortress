@@ -260,7 +260,9 @@ namespace WeDriveUntoTheFortress {
 					}
 					else if(!shooting) {
 						beingMoved.position += 2 * dirToVector(beingMoved.dir);
-						if(beingMoved.position.X % tileSize == 0 && beingMoved.position.Y % tileSize == 0) {
+						if((beingMoved.position.X % tileSize == 0 && beingMoved.position.Y % tileSize == 0) || (beingMoved.position - lastPos * tileSize).Length() > tileSize) {
+							beingMoved.position.X = ((int) (beingMoved.position.X / tileSize)) * tileSize;
+							beingMoved.position.Y = ((int) (beingMoved.position.Y / tileSize)) * tileSize;
 							map[(int) lastPos.X, (int) lastPos.Y] = MapObject.empty;
 							map[(int) beingMoved.position.X / tileSize, (int) beingMoved.position.Y / tileSize] = turn % 2 == 0 ? MapObject.friendlyTank : MapObject.enemyTank;
 							movesLeft--;
@@ -425,10 +427,12 @@ namespace WeDriveUntoTheFortress {
 					winTimer++;
 					if(winTimer > 300) {
 						if(!is2Player) {
-							Program.game.saveData.levelsComplete[Program.game.selectedLevel] = true;
-							if(Program.game.selectedLevel < Program.game.levelData.length - 1) Program.game.selectedLevel++;
+							if(enemyTanks.Count == 0) {
+								Program.game.saveData.levelsComplete[Program.game.selectedLevel] = true;
+								if(Program.game.selectedLevel < Program.game.levelData.length - 1) Program.game.selectedLevel++;
+								Program.game.saveData.saveDataToFile();
+							}
 							Program.game.gameState = WeDriveUntoTheFortress.GameState.levelSelect;
-							Program.game.saveData.saveDataToFile();
 						}
 						else
 							Program.game.gameState = WeDriveUntoTheFortress.GameState.mainMenu;

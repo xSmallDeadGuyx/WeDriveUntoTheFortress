@@ -32,7 +32,14 @@ namespace WeDriveUntoTheFortress {
 		}
 
 		private int calculateHeuristic(Vector2 pos) {
-			return 10 * (int) (Math.Abs(pos.X - end.X) + Math.Abs(pos.Y - end.Y));
+			switch(Program.game.battlefield.map[(int) pos.X, (int) pos.Y]) {
+				case MapObject.deadTank:
+				case MapObject.box:
+					return 50;
+				case MapObject.empty:
+					return 10;
+			}
+			return 1000000;
 		}
 
 		private int distanceBetween(Vector2 pos1, Vector2 pos2) {
@@ -54,6 +61,8 @@ namespace WeDriveUntoTheFortress {
 
 		private bool canMoveTo(int x, int y) {
 			if(Program.game.battlefield.canMoveTo(x, y)) return true;
+			if(x >= Battlefield.hTiles || x < 0 || y < 0 || y >= Battlefield.vTiles) return false;
+			if(Program.game.battlefield.map[x, y] == MapObject.deadTank || Program.game.battlefield.map[x, y] == MapObject.box) return true;
 			return end.X == x && end.Y == y;
 		}
 
